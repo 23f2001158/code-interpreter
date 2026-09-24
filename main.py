@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import traceback
 from io import StringIO
 from typing import List
@@ -64,26 +65,34 @@ def analyze_error_with_ai(code: str, traceback_text: str):
     )
 
     prompt = f"""
-Analyze the following Python code and traceback.
+You are analyzing a Python execution error.
 
-Identify the exact line number or line numbers in the user's
-provided code where the error occurred.
+Your task is to identify the exact line number in the USER'S CODE
+that caused the error.
 
-CODE:
+USER CODE:
 {code}
 
 TRACEBACK:
 {traceback_text}
 
-Return ONLY valid JSON in exactly this format:
+Rules:
+1. Look ONLY at the traceback entry:
+   File "<string>", line N
+2. N is the line number in the user's code.
+3. Return exactly that N.
+4. Do not count lines in this prompt.
+5. Do not count lines in main.py.
+6. Do not infer or shift the line number.
+7. Return only the JSON object.
 
-{{
-    "error_lines": [3]
-}}
+Example:
+If the traceback contains:
+File "<string>", line 2
 
-If there are multiple error lines, include all of them.
+then return:
 
-Do not include any explanation.
+{{"error_lines": [2]}}
 """
 
     response = client.chat.completions.create(
